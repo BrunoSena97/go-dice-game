@@ -1,0 +1,31 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Go backend specific
+dice_game_backend/vendor/
+dice_game_backend/dice_game_backend # Assuming this is your compiled binary name
+*.exe
+*.out
+
+# SvelteKit frontend specific
+dice_game_frontend/node_modules/
+dice_game_frontend/.svelte-kit/
+dice_game_frontend/build/
+dice_game_frontend/.env
+dice_game_frontend/.env.*
+dice_game_frontend/!.env.example
+
+# OS generated files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Log files
+*.log

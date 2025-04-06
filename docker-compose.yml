@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./dice_game_backend 
+      dockerfile: Dockerfile
+    container_name: dice_game_backend_service
+    ports:
+      - "${BACKEND_PORT_HOST}:${BACKEND_PORT_CONTAINER}"
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable
+      # - DB_HOST=db
+      # - DB_PORT=5433
+      # - DB_NAME=${DB_NAME}
+      # - DB_USER=${DB_USER}
+      # - DB_PASSWORD=${DB_PASSWORD}
+      - LISTEN_PORT=:${BACKEND_PORT_CONTAINER}
+    depends_on:
+      - db 
+    volumes:
+      - ./dice_game_backend:/app
+    restart: unless-stopped
+
+  
+
+  db:
+    image: postgres:16-alpine
+    container_name: wallet_db_service
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db_init:/docker-entrypoint-initdb.d
+    ports:
+      - "${DB_PORT_HOST}:5432"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: dice_game_redis_service
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
