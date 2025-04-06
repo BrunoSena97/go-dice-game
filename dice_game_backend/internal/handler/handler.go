@@ -359,7 +359,6 @@ func (h *Handler) handleEndPlay(conn *websocket.Conn, payloadJSON json.RawMessag
 }
 
 // Helpers
-
 // acquireRedisLock tries to set a key with NX-Not Exists and an expiry.
 func (h *Handler) acquireRedisLock(ctx context.Context, key string) (bool, error) {
 	wasSet, err := h.redisClient.SetNX(ctx, key, "locked", time.Duration(constants.RedisLockTimeout)*time.Second).Result()

@@ -3,26 +3,44 @@ version: '3.8'
 services:
   backend:
     build:
-      context: ./dice_game_backend 
+      context: ./dice_game_backend
       dockerfile: Dockerfile
     container_name: dice_game_backend_service
     ports:
-      - "${BACKEND_PORT_HOST}:${BACKEND_PORT_CONTAINER}"
+      - "${BACKEND_PORT_HOST:-8080}:${LISTEN_PORT:-8080}"
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable
-      # - DB_HOST=db
-      # - DB_PORT=5433
-      # - DB_NAME=${DB_NAME}
-      # - DB_USER=${DB_USER}
-      # - DB_PASSWORD=${DB_PASSWORD}
-      - LISTEN_PORT=:${BACKEND_PORT_CONTAINER}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SSLMODE=${DB_SSLMODE:-disable}
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_DB=${REDIS_DB:-0}
+      - LISTEN_PORT=${LISTEN_PORT:-8080}
+      - MAX_BET_AMOUNT=${MAX_BET_AMOUNT:-250}
     depends_on:
-      - db 
-    volumes:
-      - ./dice_game_backend:/app
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     restart: unless-stopped
+    healthcheck:
+        test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:${LISTEN_PORT:-8080}/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 15s
 
-  
+  frontend:
+    build:
+      context: ./dice_game_frontend
+      dockerfile: Dockerfile
+    container_name: dice_game_frontend_service
+    ports:
+      - "${FRONTEND_PORT_HOST:-4300}:4300"
+    restart: unless-stopped
 
   db:
     image: postgres:16-alpine
@@ -35,15 +53,25 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./db_init:/docker-entrypoint-initdb.d
     ports:
-      - "${DB_PORT_HOST}:5432"
+      - "${DB_PORT_HOST:-5433}:5432"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     container_name: dice_game_redis_service
     ports:
-      - "6380:6379"
+      - "${REDIS_PORT_HOST:-6380}:6379"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

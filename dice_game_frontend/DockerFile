@@ -1,0 +1,32 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+# Install ALL dependencies (including dev dependencies needed for build)
+# Using 'ci' for deterministic installs based on lock file
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+RUN npm install -g pm2
+
+COPY --from=builder /app/package.json /app/package-lock.json ./
+
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/build ./build
+
+COPY ./ecosystem.config.cjs .
+
+EXPOSE 4300
+
+# Command to run the application using PM2 in the foreground (for Docker)
+CMD [ "pm2-runtime", "start", "ecosystem.config.cjs" ]
