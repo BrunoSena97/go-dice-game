@@ -5,26 +5,50 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
+	"github.com/BrunoSena97/dice_game_backend/internal/constants"
 	"github.com/BrunoSena97/dice_game_backend/internal/platform/database"
 	redisPlatform "github.com/BrunoSena97/dice_game_backend/internal/platform/redis"
 	"github.com/joho/godotenv"
 )
 
+// Environment Variable Keys
+const (
+	envDevMode      = "dev"
+	envDBHostDev    = "DB_HOST_DEV"
+	envDBPortDev    = "DB_PORT_DEV"
+	envDBHost       = "DB_HOST"
+	envDBPort       = "DB_PORT"
+	envDBUser       = "DB_USER"
+	envDBPassword   = "DB_PASSWORD"
+	envDBName       = "DB_NAME"
+	envDBSSLMode    = "DB_SSLMODE"
+	envRedisAddrDev = "REDIS_ADDR_DEV"
+	envRedisAddr    = "REDIS_ADDR"
+	envRedisPass    = "REDIS_PASSWORD"
+	envRedisDB      = "REDIS_DB"
+	envListenPort   = "LISTEN_PORT"
+	envMaxBet       = "MAX_BET_AMOUNT"
+)
+
 type Config struct {
-	DB        database.Config      // Database configuration
-	Redis     redisPlatform.Config // Redis configuration
-	App       AppConfig            // Application-specific configuration
-	IsDevMode bool                 // Development mode flag
+	DB        database.Config
+	Redis     redisPlatform.Config
+	App       AppConfig
+	IsDevMode bool
 }
 
 type AppConfig struct {
-	ListenPort string
+	ListenPort   string
+	MaxBetAmount int64
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	IdleTimeout  time.Duration
 }
 
-// LoadConfig loads configuration from environment variables and flags
 func LoadConfig() (*Config, error) {
-	devModePtr := flag.Bool("dev", false, "Enable development mode defaults")
+	devModePtr := flag.Bool(envDevMode, false, "Enable development mode defaults")
 	flag.Parse()
 	isDev := *devModePtr
 
@@ -39,38 +63,41 @@ func LoadConfig() (*Config, error) {
 	var dbHost string
 	var dbPort int
 	if isDev {
-		dbHost = getEnv("DB_HOST_DEV", "localhost")
-		dbPort = parseEnvInt("DB_PORT_DEV", 5433)
+		dbHost = getEnv(envDBHostDev, "localhost")
+		dbPort = parseEnvInt(envDBPortDev, 5433)
 	} else {
-		dbHost = getEnv("DB_HOST", "db")
-		dbPort = parseEnvInt("DB_PORT", 5432)
+		dbHost = getEnv(envDBHost, "db")
+		dbPort = parseEnvInt(envDBPort, 5432)
 	}
 
 	dbCfg := database.Config{
 		Host:     dbHost,
 		Port:     dbPort,
-		User:     getEnv("DB_USER", "postgres"),
-		Password: getEnv("DB_PASSWORD", ""),
-		DBName:   getEnv("DB_NAME", "postgres"),
-		SSLMode:  getEnv("DB_SSLMODE", "disable"),
+		User:     getEnv(envDBUser, "postgres"),
+		Password: getEnv(envDBPassword, ""),
+		DBName:   getEnv(envDBName, "postgres"),
+		SSLMode:  getEnv(envDBSSLMode, "disable"),
 	}
 
 	// Redis configuration
 	redisCfg := redisPlatform.Config{
-		Addr:     getEnv("REDIS_ADDR", "redis:6379"),
-		Password: getEnv("REDIS_PASSWORD", ""),
-		DB:       getEnv("REDIS_DB", "0"),
+		Addr:     getEnv(envRedisAddr, "redis:6379"),
+		Password: getEnv(envRedisPass, ""),
+		DB:       getEnv(envRedisDB, "0"),
 	}
 	if isDev {
-		redisCfg.Addr = getEnv("REDIS_ADDR_DEV", "localhost:6380")
+		redisCfg.Addr = getEnv(envRedisAddrDev, "localhost:6380")
 	}
 
 	// Application configuration
 	appCfg := AppConfig{
-		ListenPort: getEnv("LISTEN_PORT", "8080"),
+		ListenPort:   getEnv(envListenPort, "8080"),
+		MaxBetAmount: int64(parseEnvInt(envMaxBet, 250)),
+		ReadTimeout:  time.Duration(constants.DefaultReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(constants.DefaultWriteTimeout) * time.Second,
+		IdleTimeout:  time.Duration(constants.DefaultIdleTimeout) * time.Second,
 	}
 
-	// Final configuration struct
 	cfg := &Config{
 		DB:        dbCfg,
 		Redis:     redisCfg,
