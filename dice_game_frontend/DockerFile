@@ -24,7 +24,7 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/build ./build
 
-COPY ecosystem.config.cjs .
+COPY ./ecosystem.config.cjs .
 
 EXPOSE 4300
 
