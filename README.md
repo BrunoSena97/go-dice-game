@@ -23,13 +23,13 @@ dice_game/
 │   │   └── wallet/
 │   ├── go.mod
 │   └── go.sum
-├── dice_game_frontend/  # Placeholder for SvelteKit frontend
-├── db_init/             # SQL scripts for database initialization
+├── dice_game_frontend/
+├── db_init/
 │   └── 01-init.sql
-├── .env.example         # Example environment variables
-├── .gitignore           # Git ignore rules for Go & SvelteKit
-├── docker-compose.yml   # Docker Compose configuration
-└── README.md            # This file
+├── .env.example
+├── .gitignore
+├── docker-compose.yml
+└── README.md
 ```
 
 _(Note: Structure reflects inclusion of `constants` package)_
@@ -39,15 +39,15 @@ _(Note: Structure reflects inclusion of `constants` package)_
 - Docker
 - Docker Compose
 - Go (version 1.20+ recommended, for local backend dev)
-- Node.js / npm (if developing the SvelteKit frontend)
+- Node.js / npm
 - Git
 
 ## Setup
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repository-url>
-    cd dice-game # Or your repository root name
+    git clone https://github.com/BrunoSena97/go-dice-game.git
+    cd dice-game
     ```
 2.  **Configure Environment:**
     - Copy the example environment file:
@@ -60,7 +60,6 @@ _(Note: Structure reflects inclusion of `constants` package)_
       - _(Optional)_ `REDIS_PASSWORD` if you configure Redis with one.
       - _(Optional)_ `BACKEND_PORT_HOST` if you want to change the port the backend is exposed on locally.
       - _(Optional)_ `MAX_BET_AMOUNT` if you want to override the default max bet (250).
-    - **Important:** The `.env` file is ignored by Git (`.gitignore`) and should **not** be committed.
 
 ## Running the Project
 
@@ -126,10 +125,10 @@ Communication happens over a single WebSocket endpoint: `/ws`. Messages are JSON
 The project should be tested locally using the Docker Compose setup.
 
 1.  **WebSocket Client:** Use a tool capable of sending WebSocket messages, such as:
-    - `wscat` (Node.js tool)
-    - Postman (using the WebSocket Request feature)
+    - `wscat`
+    - Postman
     - Browser-based WebSocket clients.
-      Connect to `ws://localhost:8080/ws` (adjust port if needed).
+      Connect to `ws://localhost:8080/ws`.
 2.  **Postman Collection:** A Postman collection demonstrating example requests should accompany this project. _(!TODO: Needs to be created)_. The collection should show how to connect and send example `play`, `get_balance`, and `end_play` messages.
 3.  **Example Flow:**
     - Connect to the WebSocket endpoint.
@@ -154,10 +153,3 @@ The project should be tested locally using the Docker Compose setup.
 - **Configuration:** Key values like the maximum bet amount (`MAX_BET_AMOUNT` env var) and HTTP server timeouts are loaded via `internal/config`. Other values like Redis lock expiry or specific bet types remain defined as constants but could be made configurable if needed.
 - **Dependencies:** Uses Go standard library, `gorilla/websocket`, `pgx/v5`, `go-redis/v8`, `joho/godotenv`.
 - **Graceful Shutdown:** Implemented in `main.go` using `signal.NotifyContext` and `server.Shutdown` to handle `SIGINT`/`SIGTERM`.
-
-## TODO / Future Work
-
-- **Implement robust Authentication and ClientID management:** Securely associate WebSocket connections with authenticated users.
-- **Add Unit and Integration Tests:** Cover services, handlers, and key workflows.
-- **Enhance Logging:** Implement structured logging (`slog`) for better monitoring and analysis.
-- **Refine Configuration:** Consider moving more constants (ex: Redis timeouts, bet types) to configuration if deployment flexibility is required.
