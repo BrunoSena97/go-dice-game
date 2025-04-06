@@ -2,7 +2,7 @@ package game
 
 import (
 	"context"
-	"fmt" // Added
+	"fmt"
 	"log"
 	"math/rand"
 
